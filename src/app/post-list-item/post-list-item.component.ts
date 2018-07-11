@@ -1,5 +1,7 @@
-import { Component, Input , OnInit } from '@angular/core';
-import { Post } from '../post';
+import { Component, Input , OnInit, OnDestroy } from '@angular/core'           ;
+import { Subscription }                         from 'rxjs/Subscription'       ;
+import { PostsService }                         from '../services/posts.service';
+import { Post }                                 from '../models/post'          ;
 
 @Component({
   selector: 'app-post-list-item',
@@ -8,14 +10,39 @@ import { Post } from '../post';
 })
 export class PostListItemComponent implements OnInit {
 
-  @Input() post: Post;
+    @Input() post: Post;
+    posts: Post[];
+    postsSubscription: Subscription;
+    
+    constructor(
+        private postsService:    PostsService
+    ) { }
 
-  constructor() { }
-
-  ngOnInit() {
-  }
-
-  // La methode onLove( love ) à été déplacer dans la class Post
-  // Voir src/app/post.ts
+    ngOnInit() {
+        this.postsSubscription = this.postsService.postsSubject.subscribe(
+            (posts: Post[]) => {
+                this.posts = posts;
+            }
+        );
+        this.postsService.emitPosts()
+    }
+    
+    onDelete(post: Post) {
+        this.postsService.deletePost(post);
+    }
+    
+    onLove(post: Post) {
+        post.loveIts++;
+        this.postsService.updatePosts();
+    }
+    
+    onNoLove(post: Post ) {
+        post.loveIts--;
+        this.postsService.updatePosts();
+    }
+    
+    ngOnDestroy() {
+        this.postsSubscription.unsubscribe();
+    }
 
 }
